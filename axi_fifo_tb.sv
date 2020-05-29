@@ -10,24 +10,29 @@ module test();
   wire wready;	
   
   // read data channel
-  reg rvalid;
-  wire [8:0] rdata;
-  wire rready;
+  wire rvalid;
+  wire [7:0] rdata;
+  reg rready;
+  
+  bit [8:0] data_stored [$];
   
   axi_fifo af1(clk,reset,wdata,wvalid,wready,rvalid,rdata,rready);
   
   initial 
     begin
+       $dumpfile("test.vcd");
+    $dumpvars;
+
       clk = 0;
       reset = 1;
       #10;
       reset = 0;
+      rready = 0;
       
       fork
         begin
-          repeat(4)
+          repeat(10)
             begin
-              @(negedge clk);
               wait(wready == 1);
               @(negedge clk);
               wvalid = 1;
@@ -35,16 +40,21 @@ module test();
             end
         end
         begin
-          repeat(4)
+          #40;
+          repeat(3)
             begin
-              @(negedge clk);
-              wait(rready == 1);
-              @(negedge clk);
-              rvalid = 1;
-              wdata = $random;
+              @(posedge clk);
+              wait(rvalid == 1);
+              rready = 1;
+              @(posedge clk);
+              data_stored.push_back(rdata);
             end
+          rready = 0;
         end
-      join
+      join_none
+      
+      #200;
+      $finish;
     end
   
   always #5 clk = ~clk;
