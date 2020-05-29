@@ -45,8 +45,10 @@ module test();
             begin
               @(posedge clk);
               wait(rvalid == 1);
+              @(negedge clk);
               rready = 1;
-              @(posedge clk);
+              @(negedge clk);
+              rready = 0;
               data_stored.push_back(rdata);
             end
           rready = 0;
