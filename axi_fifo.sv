@@ -1,4 +1,3 @@
-// Code your design here
 module axi_fifo(clk,reset,wdata,wvalid,wready,rvalid,rdata,rready);
   
   input clk;
@@ -10,9 +9,9 @@ module axi_fifo(clk,reset,wdata,wvalid,wready,rvalid,rdata,rready);
   output reg wready;	
   
   // read data channel
-  input rvalid;
-  output reg [8:0] rdata;
-  output reg rready;
+  output reg rvalid;
+  output reg [7:0] rdata;
+  input rready;
   
   reg full;
   reg empty;
@@ -22,14 +21,14 @@ module axi_fifo(clk,reset,wdata,wvalid,wready,rvalid,rdata,rready);
   reg [2:0] rptr;
   
   assign wready = ~full;	// fifo not full. So ready to take write data
-  assign rready = ~empty;	// fifo not empty. So ready to send data
+  assign rvalid = ~empty;	// fifo not empty. So output data is valid until fifo not empty to send data
   
   always@(posedge clk)
     begin
       if(reset)
         begin
           wptr <= 0;
-          rptr <= 0;
+          rptr <= 7;
           full <= 0;
           empty <= 1;
         end
@@ -38,19 +37,35 @@ module axi_fifo(clk,reset,wdata,wvalid,wready,rvalid,rdata,rready);
             if(wvalid && wready)
               begin
                 mem[wptr] <= wdata;
-                wptr <= wptr + 1;
+                empty <= 0;
+                if(wptr == (rptr-1) || (wptr == 7 && rptr == 0))
+                	wptr <= wptr;
+                else
+                  wptr <= wptr +1;
               end          	
-          	if(wptr == (rptr-1))
-              	full = 1;
-          	
-            if(rvalid && rready)
+          	if(wptr == (rptr-1) || (wptr == 7 && rptr == 0))
               begin
-                rdata <= mem[rptr];
-                rptr <= rptr + 1;
+              	full <= 1;
+                empty <= 0;
+                
               end
-            if(rptr == 0)
-               empty = 1;
+          	if(rptr == wptr)
+              begin
+               empty <= 1;
+               full  <= 0;
+              end         	
         end      
     end 
+  
+  always@(negedge clk)
+    begin
+      if(!empty)
+              begin
+                rdata <= mem[rptr];
+                if(rready)
+                	rptr <= rptr + 1;
+              end
+          
+    end
   
 endmodule
