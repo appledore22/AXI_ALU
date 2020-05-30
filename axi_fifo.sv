@@ -4,19 +4,19 @@ module axi_fifo(clk,reset,wdata,wvalid,wready,rvalid,rdata,rready);
   input reset;
   
   // write data channel
-  input [7:0] wdata;
+  input [9:0] wdata;
   input wvalid;
   output reg wready;	
   
   // read data channel
   output reg rvalid;
-  output reg [7:0] rdata;
+  output reg [9:0] rdata;
   input rready;
   
   reg full;
   reg empty;
   
-  reg [7:0] mem [8];
+  reg [9:0] mem [8];
   reg [2:0] wptr;
   reg [2:0] rptr;
   
